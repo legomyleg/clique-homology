@@ -1,5 +1,7 @@
 [project]
 name = "clique-homology"
+description = "A tool to calulate the Betti numbers of a network."
+version = "0.0.1"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

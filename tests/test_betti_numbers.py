@@ -11,27 +11,24 @@ e_1_0_1 = [(0, 1), (0, 2), (0, 3), (0, 4),
            (2, 3), (2, 4), 
            (3, 4)]
 
-def test_simple_betti_1_0_0():
+def test_simple_betti_0_0():
     pass
 
-def test_simple_betti_1_1_0():
+def test_simple_betti_1_0():
     pass
 
-def test_simple_betti_1_0_1():
+def test_simple_betti_0_1():
     pass
 
-def test_simple_betto_1_1_1():
+def test_simple_betto_1_1():
     pass
 
-def test_simple_betti_2_0_0():
+def test_simple_betti_2_0():
     pass
 
-def test_simple_betti_2_2_0():
+def test_simple_betti_0_2():
     pass
 
-def test_simple_betti_2_0_2():
-    pass
-
-def test_simple_betto_2_2_2():
+def test_simple_betto_2_2():
     pass
 

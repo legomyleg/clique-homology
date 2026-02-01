@@ -1,11 +1,11 @@
-# -------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------
 
 import networkit as nk
 import numpy as np
 import networkx as nx
 import itertools
 
-# -------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------
 
 def parse_graph_input(G, node_attr=None):
     """
@@ -23,6 +23,8 @@ def parse_graph_input(G, node_attr=None):
         G = nk.nxadapter.nx2nk(G)
     else:
         raise ValueError(f"Graph must be either networkx.Graph or networkit.Graph. Got {type(G)}")
+
+# ----------------------------------------------------------------------------------------------------------------
 
 def get_cliques(G:nk.Graph):
     """
@@ -52,7 +54,7 @@ def get_cliques(G:nk.Graph):
     for clique in all_cliques:
         yield clique
 
-# -------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------
 
 def get_colored_subgraphs(G:nk.Graph, node_attr=nk.NodeAttribute):
     """
@@ -65,7 +67,7 @@ def get_colored_subgraphs(G:nk.Graph, node_attr=nk.NodeAttribute):
     """
     pass
 
-# -------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------
 
 def boundary_maps(cliques:list) -> list:
     """
@@ -128,6 +130,7 @@ def boundary_maps(cliques:list) -> list:
                 if face in position_dict1:
                     M[position_dict1[face], v2] = 1
                 else:
+                    # hopefully this should never happen, with the way that we've written things
                     raise ValueError(f"Face {face} not found in position_dict1.")
         
         return M
@@ -135,7 +138,7 @@ def boundary_maps(cliques:list) -> list:
     positions = clique_order(cliques)
     return [build_map(positions[k-1], positions[k]) for k in range(1, len(positions))]
 
-# -------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------
 
 def ranks_and_nullities(M:np.array) -> tuple:
     """
@@ -190,7 +193,7 @@ def ranks_and_nullities(M:np.array) -> tuple:
     # returns (rank, nullity)
     return rank_Z2(M), M.shape[1] - rank_Z2(M)
 
-# -------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------
 
 def betti_numbers(G:nk.Graph, attr:str="color", method:str="clique") -> np.array:
     """
@@ -277,6 +280,8 @@ def betti_numbers(G:nk.Graph, attr:str="color", method:str="clique") -> np.array
     
     else:
         pass
+
+# ----------------------------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
     pass

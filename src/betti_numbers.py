@@ -2,8 +2,26 @@
 
 import networkit as nk
 import numpy as np
+import networkx as nx
 
 # -------------------------------------------------------------------------------------------
+
+def parse_graph_input(G, node_attr=None):
+    """
+    Handle multiple different formats for G. Mostly for testing purposes.
+    
+    :param G: An undirected networkx.Graph object or networkit.Graph object.
+    :type G: Union[nx.Graph, nk.Graph]
+    :param node_attr: A NodeAttribute networkit class or dictionary of node attributes.
+    :type node_attr: Union[nk.NodeAttribute, dict]
+    """
+
+    if type(G) == nk.Graph:
+        pass
+    elif type(G) == nx.Graph:
+        G = nk.nxadapter(G)
+    else:
+        raise ValueError(f"Graph must be either networkx.Graph or networkit.Graph. Got {type(G)}")
 
 def get_cliques(G:nk.Graph):
     """
@@ -16,18 +34,20 @@ def get_cliques(G:nk.Graph):
 
 # -------------------------------------------------------------------------------------------
 
-def get_colored_subgraphs(G:nk.Graph):
+def get_colored_subgraphs(G:nk.Graph, node_attr=nk.NodeAttribute):
     """
     Return a generator for colored subgraphs of a graph G.
     
     :param G: A colored graph.
     :type G: nk.Graph
+    :param attr: The attribute to group nodes by.
+    :type attr: nk.NodeAttribute
     """
     pass
 
 # -------------------------------------------------------------------------------------------
 
-def boundary_maps(cliques:list) -> tuple:
+def boundary_maps(cliques:list) -> list:
     """
     Construct the boundary maps D_k given a complete list of cliques (simplicies).
     
@@ -36,14 +56,14 @@ def boundary_maps(cliques:list) -> tuple:
     :return: a tuple of numpy arrays. These are the boundary maps D_k for each k.
     :rtype: tuple
     """
-    def clique_order(cliques:list) -> tuple:
+    def clique_order(cliques:list) -> list:
         """
         Define an ordering for each clique with respect to the other cliques of their given size.
         This will be used to construct the boundary maps.
         
         :param cliques: Description
         :type cliques: list
-        :return: A tuple of dictionaries, one for each size of clique.
+        :return: A tuple of dictionaries, one for each size of clique: tuple(dict(tuple:int), ...)
         :rtype: tuple
         """
         pass
@@ -52,14 +72,30 @@ def boundary_maps(cliques:list) -> tuple:
         """
         Construct a boundary map from position_dict1 to position_dict2.
         
-        :param position_dict1: Dictionary of positions for k-cliques.
+        :param position_dict1: Dictionary of positions for (k-1)-cliques.
         :type position_dict1: dict
-        :param position_dict2: Dictionary of positions for (k-1)-cliques.
+        :param position_dict2: Dictionary of positions for (k)-cliques.
         :type position_dict2: dict
         :return: Description
         :rtype: Any
         """
-    pass
+
+        # We are mapping from the (k-1)-cliques (nrow) to the k-cliques (ncol) 
+        M = np.zeros((len(position_dict1), len(position_dict2)), dtype=int)
+        for k2, v2 in position_dict2.items():
+            # Iterate over all faces of the simplex k2
+            for i in range(len(k2)):
+                # Create face by removing the i-th vertex w/ tuple slicing
+                face = k2[:i] + k2[i+1:]
+                if face in position_dict1:
+                    M[position_dict1[face], v2] = 1
+                else:
+                    raise ValueError(f"Face {face} not found in position_dict1.")
+        
+        return M
+
+    positions = clique_order(cliques)
+    return [build_map(positions[k-1], positions[k]) for k in range(1, len(positions))]
 
 # -------------------------------------------------------------------------------------------
 
@@ -112,6 +148,10 @@ def betti_numbers(G:nk.Graph, attr:str="color", method:str="clique") -> np.array
     If 'subgraph1' method is specified, 
     builds a distinct simplicial complex for each colored subgraph.
     Returns a matrix where each row vector gives the Betti numbers for a colored subgraph.
+
+    If 'subgraph2' method is specified,
+    partitions the graph by disregarding edges between nodes of different attributes, then computes
+    the homology for this new graph.
     
     :param G: A colored graph.
     :type G: nk.Graph
@@ -119,11 +159,15 @@ def betti_numbers(G:nk.Graph, attr:str="color", method:str="clique") -> np.array
     :param attr: The attribute to group nodes by. Defaults to color.
     :type attr: str
     """
-    if method not in ["subgraph1", "clique"]:
-        raise ValueError(f"Invalid method '{method}'. Expected 'subgraph1' or 'clique'.")
-    pass
+    if method not in ["subgraph1", "subgraph2", "clique"]:
+        raise ValueError(f"Invalid method '{method}'. Expected 'subgraph1', 'subgraph2', or 'clique'.")
+    
+    if type(G) != nk.Graph:
+        raise ValueError(f"{G} is not a networkit.Graph graph.")
 
-    if method == "subgraph1":
+# note to self: a lot of this code can be refactored, and chunks can be combined between methods
+
+    if method.startswith("subgraph"):
         # in this case, compute all the betti numbers separately for each colored subgraph.
         # for this one, we may want to rework it so that it simply considers colors to partition into components instead
         betti_lists = []
@@ -144,8 +188,15 @@ def betti_numbers(G:nk.Graph, attr:str="color", method:str="clique") -> np.array
             betti = [nullities[k] - ranks[k+1] for k in range(len(ranks)-1)]
             betti_lists.append(betti)
 
-        # returns a matrix of betti numbers    
-        return np.array(betti_lists)
+        # a matrix of betti numbers    
+        B = np.array(betti_lists)
+
+        if method == "subgraph1":
+            return B
+        elif method == "subgraph2":
+            # aggregate Betti numbers
+            return np.sum(B, axis=0)
+
     
     elif method == "clique":
         # the difference here is we compute the cliques, aggregate them, then compute the homology
@@ -163,8 +214,6 @@ def betti_numbers(G:nk.Graph, attr:str="color", method:str="clique") -> np.array
 
         # returns a matrix of betti numbers
         return np.array(betti)
-
-
     
     else:
         pass

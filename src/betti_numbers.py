@@ -3,6 +3,7 @@
 import networkit as nk
 import numpy as np
 import networkx as nx
+import itertools
 
 # -------------------------------------------------------------------------------------------
 
@@ -19,7 +20,7 @@ def parse_graph_input(G, node_attr=None):
     if type(G) == nk.Graph:
         pass
     elif type(G) == nx.Graph:
-        G = nk.nxadapter(G)
+        G = nk.nxadapter.nx2nk(G)
     else:
         raise ValueError(f"Graph must be either networkx.Graph or networkit.Graph. Got {type(G)}")
 
@@ -30,7 +31,26 @@ def get_cliques(G:nk.Graph):
     :param G: A colored graph.
     :type G: nk.Graph
     """
-    pass
+
+    # this part seems like it isn't the most efficient 
+    # since we check so many duplicate cliques. 
+    # Maybe have to look at different methods for this
+    all_cliques = set()
+    def collect_subcliques(C):
+        for r in range(1, len(C)+1):
+            for subset in itertools.combinations(C, r):
+                all_cliques.add(tuple(sorted(subset)))
+
+    # Find maximal cliques
+    # the callback function runs when every maximal clique is found.
+    clique_finder = nk.clique.MaximalCliques(G, maximumOnly=False, callback=collect_subcliques)
+    clique_finder.run()
+
+    all_cliques = sorted(list(all_cliques), key=len)
+
+    # generate all the cliques
+    for clique in all_cliques:
+        yield clique
 
 # -------------------------------------------------------------------------------------------
 
@@ -66,7 +86,25 @@ def boundary_maps(cliques:list) -> list:
         :return: A tuple of dictionaries, one for each size of clique: tuple(dict(tuple:int), ...)
         :rtype: tuple
         """
-        pass
+        result = [dict() for _ in range(len(cliques[-1]))]
+
+        # track the current dictionary in result
+        i = 0
+        # track the positions we are assigning for the current dictionary
+        j = 0
+        # track the current size clique
+        k = 1
+        for clique in cliques:
+            if len(clique) > k:
+                k = len(clique)
+                i += 1
+                j = 0
+            
+            # assign the index j to the clique in the i-th dictionary in result
+            result[i][clique] = j
+            j += 1
+
+        return result
 
     def build_map(position_dict1, position_dict2) -> np.array:
         """
@@ -108,18 +146,8 @@ def ranks_and_nullities(M:np.array) -> tuple:
     :return: a tuple of rank and nullity.
     :rtype: tuple
     """
-    def row_reduce_Z2(M:np.array) -> np.array:
-        """
-        Row reduce a matrix with components in {0,1}.
 
-        :param M: a matrix M({0, 1}).
-        :type M: np.array
-        :return: the row reduced matrix.
-        :rtype: np.array
-        """
-        pass
-
-    def rank_Z2(M2:np.array) -> int:
+    def rank_Z2(M:np.array) -> int:
         """
         Return the rank of a matrix M2({0, 1}).
 
@@ -128,12 +156,39 @@ def ranks_and_nullities(M:np.array) -> tuple:
         :return: the rank of M2.
         :rtype: int
         """
-        pass
+        M2 = M.copy()
+        nrows, ncols = M2.shape
+        rank = 0
 
-    M2 = row_reduce_Z2(M)
+        for j in range(ncols):
+            if rank >= nrows:
+                break
+
+            # Find a pivot row for column j, looking only at rows >= rank
+            # np.where returns a tuple, so we take [0] to get the array of indices
+            pivot_candidates = np.where(M2[rank:, j] == 1)[0]
+
+            if len(pivot_candidates) > 0:
+                # Get the first available pivot (index is relative to the slice, so add rank)
+                pivot_row = pivot_candidates[0] + rank
+
+                # Swap the current row (rank) with the pivot row
+                if pivot_row != rank:
+                    M2[[rank, pivot_row]] = M2[[pivot_row, rank]]
+
+                # Eliminate 1s in this column for all rows BELOW the pivot
+                # We use (^) for addition modulo 2
+                rows_to_eliminate = np.where(M2[rank+1:, j] == 1)[0] + (rank + 1)
+                if len(rows_to_eliminate) > 0:
+                    M2[rows_to_eliminate] ^= M2[rank]
+
+                rank += 1
+        
+        return rank
+
     # utilize the rank-nullity theorem here.
     # returns (rank, nullity)
-    return rank_Z2(M2), M2.shape[1] - rank_Z2(M2)
+    return rank_Z2(M), M.shape[1] - rank_Z2(M)
 
 # -------------------------------------------------------------------------------------------
 
@@ -162,8 +217,10 @@ def betti_numbers(G:nk.Graph, attr:str="color", method:str="clique") -> np.array
     if method not in ["subgraph1", "subgraph2", "clique"]:
         raise ValueError(f"Invalid method '{method}'. Expected 'subgraph1', 'subgraph2', or 'clique'.")
     
-    if type(G) != nk.Graph:
-        raise ValueError(f"{G} is not a networkit.Graph graph.")
+    try:
+        parse_graph_input(G)
+    except Exception as e:
+        raise ValueError(f"Error parsing graph: {e}")
 
 # note to self: a lot of this code can be refactored, and chunks can be combined between methods
 
@@ -184,8 +241,10 @@ def betti_numbers(G:nk.Graph, attr:str="color", method:str="clique") -> np.array
                 ranks.append(rank)
                 nullities.append(nullity)
 
+            # prepend the number of nodes
+            nullities = [maps[0].shape[0]] + nullities
             # compute the betti numbers    
-            betti = [nullities[k] - ranks[k+1] for k in range(len(ranks)-1)]
+            betti = [nullities[k] - ranks[k] for k in range(len(ranks))]
             betti_lists.append(betti)
 
         # a matrix of betti numbers    
@@ -200,7 +259,7 @@ def betti_numbers(G:nk.Graph, attr:str="color", method:str="clique") -> np.array
     
     elif method == "clique":
         # the difference here is we compute the cliques, aggregate them, then compute the homology
-        cliques = sorted([clique for H in get_colored_subgraphs(G) for clique in get_cliques(H)], key=len, reverse=True)
+        cliques = sorted([clique for H in get_colored_subgraphs(G) for clique in get_cliques(H)], key=len)
         maps = boundary_maps(cliques)
         ranks, nullities = [], []
         for boundary_map in maps:
@@ -209,10 +268,11 @@ def betti_numbers(G:nk.Graph, attr:str="color", method:str="clique") -> np.array
             ranks.append(rank)
             nullities.append(nullity)
 
+        nullities = [maps[0].shape[0]] + nullities
         # compute the betti numbers    
-        betti = [nullities[k] - ranks[k+1] for k in range(len(ranks)-1)]
+        betti = [nullities[k] - ranks[k] for k in range(len(ranks))]
 
-        # returns a matrix of betti numbers
+        # returns a vector of betti numbers
         return np.array(betti)
     
     else:

@@ -18,9 +18,9 @@ def parse_graph_input(G, node_attr=None):
     """
 
     if type(G) == nk.Graph:
-        pass
+        return G
     elif type(G) == nx.Graph:
-        G = nk.nxadapter.nx2nk(G)
+        return nk.nxadapter.nx2nk(G)
     else:
         raise ValueError(f"Graph must be either networkx.Graph or networkit.Graph. Got {type(G)}")
 
@@ -56,16 +56,25 @@ def get_cliques(G:nk.Graph):
 
 # ----------------------------------------------------------------------------------------------------------------
 
-def get_colored_subgraphs(G:nk.Graph, node_attr=nk.NodeAttribute):
+def get_colored_subgraphs(G:nk.Graph, node_attr:dict):
     """
     Return a generator for colored subgraphs of a graph G.
     
     :param G: A colored graph.
     :type G: nk.Graph
-    :param attr: The attribute to group nodes by.
-    :type attr: nk.NodeAttribute
+    :param node_attr: A dictionary mapping node IDs to their attribute (color).
+    :type node_attr: dict
     """
-    pass
+    # Group nodes by their attribute value
+    groups = {}
+    for node, color in node_attr.items():
+        if G.hasNode(node):
+            if color not in groups:
+                groups[color] = []
+            groups[color].append(node)
+
+    for color, nodes in groups.items():
+        yield nk.graphtools.subgraphFromNodes(G, nodes)
 
 # ----------------------------------------------------------------------------------------------------------------
 
@@ -88,7 +97,8 @@ def boundary_maps(cliques:list) -> list:
         :return: A tuple of dictionaries, one for each size of clique: tuple(dict(tuple:int), ...)
         :rtype: tuple
         """
-        result = [dict() for _ in range(len(cliques[-1]))]
+
+        result = [{} for _ in range(len(cliques[-1]))]
 
         # track the current dictionary in result
         i = 0
@@ -195,7 +205,7 @@ def ranks_and_nullities(M:np.array) -> tuple:
 
 # ----------------------------------------------------------------------------------------------------------------
 
-def betti_numbers(G:nk.Graph, attr:str="color", method:str="clique") -> np.array:
+def betti_numbers(G, attr:dict=None, method:str="clique") -> np.array:
     """
     Compute the Betti numbers of a colored graph. 
 
@@ -212,16 +222,23 @@ def betti_numbers(G:nk.Graph, attr:str="color", method:str="clique") -> np.array
     the homology for this new graph.
     
     :param G: A colored graph.
-    :type G: nk.Graph
+    :type G: Union[nk.Graph, nx.Graph]
 
-    :param attr: The attribute to group nodes by. Defaults to color.
-    :type attr: str
+    :param attr: A dictionary of node attributes, with attribute as value and node as key.
+    :type attr: dict
     """
     if method not in ["subgraph1", "subgraph2", "clique"]:
         raise ValueError(f"Invalid method '{method}'. Expected 'subgraph1', 'subgraph2', or 'clique'.")
     
+    # Extract attributes if G is a NetworkX graph before conversion
+    node_colors = {}
+    if isinstance(G, nx.Graph):
+        node_colors = nx.get_node_attributes(G, attr)
+    else:
+        node_colors = attr
+
     try:
-        parse_graph_input(G)
+        G = parse_graph_input(G)
     except Exception as e:
         raise ValueError(f"Error parsing graph: {e}")
 
@@ -231,7 +248,7 @@ def betti_numbers(G:nk.Graph, attr:str="color", method:str="clique") -> np.array
         # in this case, compute all the betti numbers separately for each colored subgraph.
         # for this one, we may want to rework it so that it simply considers colors to partition into components instead
         betti_lists = []
-        for subgraph in get_colored_subgraphs(G):
+        for subgraph in get_colored_subgraphs(G, node_colors):
 
             # get the maps for each subgraph
             cliques = [clique for clique in get_cliques(subgraph)]
@@ -262,7 +279,8 @@ def betti_numbers(G:nk.Graph, attr:str="color", method:str="clique") -> np.array
     
     elif method == "clique":
         # the difference here is we compute the cliques, aggregate them, then compute the homology
-        cliques = sorted([clique for H in get_colored_subgraphs(G) for clique in get_cliques(H)], key=len)
+        cliques = sorted([clique for H in get_colored_subgraphs(G, node_colors) for clique in get_cliques(H)], key=len)
+        print(cliques)
         maps = boundary_maps(cliques)
         ranks, nullities = [], []
         for boundary_map in maps:

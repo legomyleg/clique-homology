@@ -11,6 +11,10 @@ venv.bak/
 
 __pycache__/
 
+# IDE files
+.idea/
+.vscode/
+
 # Distribution / packaging
 .Python
 build/

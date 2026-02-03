@@ -62,7 +62,7 @@ def test_parse_graph_input_3():
 def test_get_cliques_1():
     G = nx.complete_graph(5)
     G = nk.nxadapter.nx2nk(G)
-    print([_ for _ in betti_numbers.get_cliques(G)])
+    return [_ for _ in betti_numbers.get_cliques(G)]
 
 
 def test_get_cliques_2():
@@ -78,17 +78,20 @@ def test_get_cliques_3():
 def test_get_colored_subgraphs_1():
     G = nx.complete_graph(5)
     G = nk.nxadapter.nx2nk(G)
-    attr = {0: "red", 1: "red", 2: "red", 3: "blue", 4: "blue"}
+    attr = ["red", "red", "red", "blue", "blue"]
     print([list(H.iterNodes()) for H in betti_numbers.get_colored_subgraphs(G, attr)])
 
 def test_get_colored_subgraphs_2():
     pass
 
 def test_get_colored_subgraphs_3():
-    pass
+    G = nx.complete_graph(5)
+    G = nk.nxadapter.nx2nk(G)
+    attr = ["red"]*5
+    print([list(H.iterNodes()) for H in betti_numbers.get_colored_subgraphs(G, attr)])
 
-def boundary_maps_1():
-    pass
+def boundary_maps_1(cliques):
+    return betti_numbers.boundary_maps(cliques)
 
 def boundary_maps_2():
     pass
@@ -106,5 +109,6 @@ def test_ranks_and_nullities_3():
     pass
 
 if __name__ == "__main__":
-    test_get_colored_subgraphs_1()
-    #test_bett_numbers_1()
+    cliques = test_get_cliques_1()
+    print(boundary_maps_1(cliques))
+    

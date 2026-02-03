@@ -13,8 +13,8 @@ def parse_graph_input(G, node_attr=None):
     
     :param G: An undirected networkx.Graph object or networkit.Graph object.
     :type G: Union[nx.Graph, nk.Graph]
-    :param node_attr: A NodeAttribute networkit class or dictionary of node attributes.
-    :type node_attr: Union[nk.NodeAttribute, dict]
+    :param node_attr: A list of node colors, indexed by node value (nodes in G are 0-indexed integers).
+    :type node_attr: list
     """
 
     if type(G) == nk.Graph:
@@ -56,25 +56,25 @@ def get_cliques(G:nk.Graph):
 
 # ----------------------------------------------------------------------------------------------------------------
 
-def get_colored_subgraphs(G:nk.Graph, node_attr:dict):
+def get_colored_subgraphs(G:nk.Graph, node_colors:list):
     """
     Return a generator for colored subgraphs of a graph G.
     
     :param G: A colored graph.
     :type G: nk.Graph
     :param node_attr: A dictionary mapping node IDs to their attribute (color).
-    :type node_attr: dict
+    :type node_attr: list
     """
-    # Group nodes by their attribute value
-    groups = {}
-    for node, color in node_attr.items():
-        if G.hasNode(node):
-            if color not in groups:
-                groups[color] = []
-            groups[color].append(node)
-
-    for color, nodes in groups.items():
-        yield nk.graphtools.subgraphFromNodes(G, nodes)
+    # Group nodes by their attribute value - color:[nodes] key-value pairs
+    node_subsets = {}
+    for node, color in enumerate(node_colors):
+        if color not in node_subsets:
+            node_subsets[color] = [node]
+        else:
+            node_subsets[color].append(node)
+        
+    for color in node_subsets.keys():
+        yield nk.graphtools.subgraphFromNodes(G, node_subsets[color])
 
 # ----------------------------------------------------------------------------------------------------------------
 
@@ -205,7 +205,7 @@ def ranks_and_nullities(M:np.array) -> tuple:
 
 # ----------------------------------------------------------------------------------------------------------------
 
-def betti_numbers(G, attr:dict=None, method:str="clique") -> np.array:
+def betti_numbers(G, colors:list, method:str="clique") -> np.array:
     """
     Compute the Betti numbers of a colored graph. 
 
@@ -229,18 +229,6 @@ def betti_numbers(G, attr:dict=None, method:str="clique") -> np.array:
     """
     if method not in ["subgraph1", "subgraph2", "clique"]:
         raise ValueError(f"Invalid method '{method}'. Expected 'subgraph1', 'subgraph2', or 'clique'.")
-    
-    # Extract attributes if G is a NetworkX graph before conversion
-    node_colors = {}
-    if isinstance(G, nx.Graph):
-        node_colors = nx.get_node_attributes(G, "color")
-    else:
-        node_colors = attr
-
-    try:
-        G = parse_graph_input(G)
-    except Exception as e:
-        raise ValueError(f"Error parsing graph: {e}")
 
 # note to self: a lot of this code can be refactored, and chunks can be combined between methods
 
@@ -248,7 +236,7 @@ def betti_numbers(G, attr:dict=None, method:str="clique") -> np.array:
         # in this case, compute all the betti numbers separately for each colored subgraph.
         # for this one, we may want to rework it so that it simply considers colors to partition into components instead
         betti_lists = []
-        for subgraph in get_colored_subgraphs(G, node_colors):
+        for subgraph in get_colored_subgraphs(G, colors):
 
             # get the maps for each subgraph
             cliques = [clique for clique in get_cliques(subgraph)]
@@ -279,7 +267,7 @@ def betti_numbers(G, attr:dict=None, method:str="clique") -> np.array:
     
     elif method == "clique":
         # the difference here is we compute the cliques, aggregate them, then compute the homology
-        cliques = sorted([clique for H in get_colored_subgraphs(G, node_colors) for clique in get_cliques(H)], key=len)
+        cliques = sorted([clique for H in get_colored_subgraphs(G, colors) for clique in get_cliques(H)], key=len)
         print(cliques)
         maps = boundary_maps(cliques)
         ranks, nullities = [], []

@@ -233,7 +233,7 @@ def betti_numbers(G, attr:dict=None, method:str="clique") -> np.array:
     # Extract attributes if G is a NetworkX graph before conversion
     node_colors = {}
     if isinstance(G, nx.Graph):
-        node_colors = nx.get_node_attributes(G, attr)
+        node_colors = nx.get_node_attributes(G, "color")
     else:
         node_colors = attr
 

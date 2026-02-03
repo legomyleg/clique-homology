@@ -162,11 +162,11 @@ def ranks_and_nullities(M:np.array) -> tuple:
 
     def rank_Z2(M:np.array) -> int:
         """
-        Return the rank of a matrix M2({0, 1}).
+        Return the rank of a matrix M({0, 1}).
 
-        :param M2: a matrix M2({0, 1}).
-        :type M2: np.array
-        :return: the rank of M2.
+        :param M: a matrix M({0, 1}).
+        :type M: np.array
+        :return: the rank of M.
         :rtype: int
         """
         M2 = M.copy()

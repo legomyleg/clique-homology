@@ -2,7 +2,7 @@ import pytest
 import networkx as nx
 import networkit as nk
 from random import choice
-from clique_homology.stats_engine import betti_numbers
+from clique_homology import betti_numbers
 
 v_1_0_0 = {0, 1, 2}
 e_1_0_0 = [(0, 1), (0, 2), (1, 2)]

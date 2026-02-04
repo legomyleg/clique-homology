@@ -261,6 +261,7 @@ def betti_numbers(G, colors:list, method:str="clique") -> np.ndarray:
                 # compute the betti numbers    
                 betti = [nullities[k] - ranks[k] for k in range(len(ranks))]
             else:
+                # handle the edge cases
                 if not cliques:
                     betti = []
                 else:

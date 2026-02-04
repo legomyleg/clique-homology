@@ -102,4 +102,7 @@ if __name__ == "__main__":
 
     for i, (G, c, exp) in enumerate(cases):
         print(f"Case {i}:")
-        assert np.array_equal(betti_numbers(G, c), exp)
+        obs = betti_numbers(G, c)
+        print(obs)
+        assert np.array_equal(obs, exp)
+        print("passed")

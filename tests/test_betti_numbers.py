@@ -77,12 +77,16 @@ def generate_edge_case_graphs():
     c7 = ["red"] * 5 + ["blue"] * 5
     exp7 = np.array([2, 2])
 
-    # octohedreon
-
+    # octohedreon: a hollow 2-sphere comprised of triangles
+    # this is the 8th test case: nice.
     G8 = nx.octahedral_graph() 
     G8 = convert(G8)
     c8 = ["red"] * 6
     exp8 = np.array([1, 0, 1])
+
+    # nx.draw(nx.octahedral_graph(), node_color = c8)
+    # plt.show()
+    # plt.clf()
 
     cases = [
         (G0, c0, exp0), (G1, c1, exp1),

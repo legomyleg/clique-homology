@@ -17,6 +17,9 @@ def get_max_clique_size(G:nk.Graph):
     finder.run()
     cliques = finder.getCliques()
     
+    if not cliques:
+        return 0
+    
     return len(cliques[0])
 
 
@@ -91,6 +94,9 @@ def boundary_maps(cliques:list) -> list:
         :return: A tuple of dictionaries, one for each size of clique: tuple(dict(tuple:int), ...)
         :rtype: tuple
         """
+
+        if not cliques:
+            return []
 
         max_clique_size = len(cliques[-1])
         result = [{} for _ in range(max_clique_size)]
@@ -255,7 +261,10 @@ def betti_numbers(G, colors:list, method:str="clique") -> np.ndarray:
                 # compute the betti numbers    
                 betti = [nullities[k] - ranks[k] for k in range(len(ranks))]
             else:
-                betti = [len(cliques)]
+                if not cliques:
+                    betti = []
+                else:
+                    betti = [len(cliques)]
             betti_lists.append(betti)
         
         # pad with zeros
@@ -289,7 +298,10 @@ def betti_numbers(G, colors:list, method:str="clique") -> np.ndarray:
             # compute the betti numbers    
             betti = [nullities[k] - ranks[k] for k in range(len(ranks))]
         else:
-            betti = [len(cliques)]
+            if not cliques:
+                betti = []
+            else:
+                betti = [len(cliques)]
         # pad with zeros to ensure consistency in size across permutations
         padded_betti = betti + [0] * (max_len - len(betti))
         # vector of betti numbers

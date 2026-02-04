@@ -1,163 +1,105 @@
-import pytest
+# for generating test cases
 import networkx as nx
 import networkit as nk
-from random import choice, seed
-from clique_homology import betti_numbers
+from random import choice, seed, sample
+
+# functions to test
+from clique_homology.betti_numbers import *
+
+# to visually verify the test case
 import matplotlib.pyplot as plt
 
 seed(122)
 
-v_1_0_0 = {0, 1, 2}
-e_1_0_0 = [(0, 1), (0, 2), (1, 2)]
-c1 = {0: "blue", 1: "blue", 2:"blue"}
+# --- Support Functions ---
 
-v_1_1_0 = {0, 1, 2, 3}
-e_1_1_0 = [(0, 1), (0, 3), (1, 2), (2, 3)]
-c2 = {0: "blue", 1: "red"}
+def generate_edge_case_graphs():
 
-v_1_0_1 = {0, 1, 2, 3, 4}
-e_1_0_1 = [(0, 1), (0, 2), (0, 3), (0, 4), 
-           (1, 2), (1, 3), 
-           (2, 3), (2, 4), 
-           (3, 4)]
+    # convert a networkx graph to a networkit graph
+    convert = lambda G: nk.nxadapter.nx2nk(G)
 
-def test_simple_betti_0_0():
-    pass
+    """
+    use method='clique'.
+    G[i]: nk.Graph object.
+    c[i]: associated node coloring.
+    exp[i]: expected output of the betti_numbers function.
+    """
 
-def test_simple_betti_1_0():
-    pass
+    # empty graph
+    G0 = nk.Graph()
+    c0 = []
+    exp0 = np.array([])
 
-def test_simple_betti_0_1():
-    pass
+    # 5 nodes, 0 edges, 1 color
+    G1 = nx.Graph()
+    G1.add_nodes_from([0, 1, 2, 3, 4])
+    G1 = convert(G1)
+    c1 = ["red"] * 5
+    exp1 = np.array([5])
 
-def test_simple_betto_1_1():
-    pass
+    # 1 node, 0 edges, 1 color
+    G2 = nx.Graph()
+    G2.add_node(0)
+    G2 = convert(G2)
+    c2 = ["red"]
+    exp2 = np.array([1])
 
-def test_simple_betti_2_0():
-    pass
+    # 2 nodes, 1 edge, 1 color
+    G3 = nx.Graph([(0, 1)])
+    G3 = convert(G3)
+    c3 = ["red"] * 2
+    exp3 = np.array([1, 0])
 
-def test_simple_betti_0_2():
-    pass
+    # 2 nodes, 1 edge, 2 colors
+    G4 = nx.Graph([(0, 1)])
+    G4 = convert(G4)
+    c4 = ["red", "blue"]
+    exp4 = np.array([2, 0])
 
-def test_simple_betto_2_2():
-    pass
+    # 3 nodes, 3 edges, 1 color
+    G5 = nx.complete_graph(3)
+    G5 = convert(G5)
+    c5 = ["red"] * 3
+    exp5 = np.array([1, 0, 0])
 
-# --- test Betti numbers ---
+    # petersen graph, 1 color
+    G6 = nx.petersen_graph()
+    G6 = convert(G6)
+    c6 = ["red"] * 10
+    exp6 = np.array([1, 6])
+    # use this code to see what this graph looks like:
+    # nx.draw(nx.petersen_graph(), node_color = c5)
+    # plt.show()
+    # plt.clf()
 
-def test_bett_numbers_1():
-    G = nx.petersen_graph()
-    G = nk.nxadapter.nx2nk(G)
-    attr = [choice(["red", "blue"]) for _ in range(10)]
-    print(betti_numbers.betti_numbers(G, attr))
+    # petersen graph, 2 colors
+    G7 = G6
+    c7 = ["red"] * 5 + ["blue"] * 5
+    exp7 = np.array([2, 2])
 
-def test_betti_numbers_2():
-    G = nx.complete_graph(10)
-    G = nk.nxadapter.nx2nk(G)
+    # octohedreon
 
-    attr = ["red"] * 5 + ["blue"] * 5
-    print(betti_numbers.betti_numbers(G, attr))
+    G8 = nx.octahedral_graph() 
+    G8 = convert(G8)
+    c8 = ["red"] * 6
+    exp8 = np.array([1, 0, 1])
 
-def test_betti_numbers_3():
-    G = nx.petersen_graph()
-    G = nk.nxadapter.nx2nk(G)
-    attr = ["red"] * 5 + ["blue"] * 5
-    print(betti_numbers.betti_numbers(G, attr))
+    cases = [
+        (G0, c0, exp0), (G1, c1, exp1),
+        (G2, c2, exp2), (G3, c3, exp3),
+        (G4, c4, exp4), (G5, c5, exp5),
+        (G6, c6, exp6), (G7, c7, exp7),
+        (G8, c8, exp8)
+    ]
 
-def test_betti_numbers_4():
-    G = nx.Graph([(0, 1)])
-    G = nk.nxadapter.nx2nk(G)
-    attr = ["red", "red"]
-    print(betti_numbers.betti_numbers(G, attr))
+    return cases
 
-def test_betti_numbers_5():
-    G = nx.petersen_graph()
-    attr = ['red'] * 5 + ['blue'] * 5
-    G2 = nk.nxadapter.nx2nk(G.copy())
-
-    print(betti_numbers.betti_numbers(G2, attr, method = 'clique'))
-    print(betti_numbers.betti_numbers(G2, attr, method = 'subgraph1'))
-    print(betti_numbers.betti_numbers(G2, attr, method = 'subgraph2'))
-
-    nx.draw(G, node_color = attr)
-    plt.show()
-    plt.clf()
-
-def test_betti_numbers_6():
-    G = nx.Graph([(0, 1)])
-    G = nk.nxadapter.nx2nk(G)
-    attr = ["red", "blue"]
-    print(betti_numbers.betti_numbers(G, attr, method = 'clique'))
-
-
-# --- Test helper functions individually ---
-
-def test_get_cliques_1():
-    G = nx.complete_graph(5)
-    G = nk.nxadapter.nx2nk(G)
-    return [_ for _ in betti_numbers.get_cliques(G)]
-
-
-def test_get_cliques_2():
-    G = nx.petersen_graph()
-    G = nk.nxadapter.nx2nk(G)
-    print([_ for _ in betti_numbers.get_cliques(G)])
-
-def test_get_cliques_3():
-    G = nx.complete_graph(1)
-    G = nk.nxadapter.nx2nk(G)
-    print([_ for _ in betti_numbers.get_cliques(G)])
-
-def test_get_colored_subgraphs_1():
-    G = nx.complete_graph(5)
-    G = nk.nxadapter.nx2nk(G)
-    attr = ["red", "red", "red", "blue", "blue"]
-    print([list(H.iterNodes()) for H in betti_numbers.get_colored_subgraphs(G, attr)])
-
-def test_get_colored_subgraphs_2():
-    G = nx.complete_graph(2)
-    G = nk.nxadapter.nx2nk(G)
-    attr = ["red", "red"]
-    print([list(H.iterNodes()) for H in betti_numbers.get_colored_subgraphs(G, attr)])
-
-def test_get_colored_subgraphs_3():
-    G = nx.complete_graph(5)
-    G = nk.nxadapter.nx2nk(G)
-    attr = ["red"]*5
-    print([list(H.iterNodes()) for H in betti_numbers.get_colored_subgraphs(G, attr)])
-
-def boundary_maps_1():
-    cliques = test_get_cliques_1()
-    print(cliques)
-    return betti_numbers.boundary_maps(cliques)
-
-def boundary_maps_2():
-    cliques = sorted([(0, 1, 2), (0, 1), (0, 2), (1, 2), (0,), (1,), (2,)], key=len)
-    print(cliques)
-    return betti_numbers.boundary_maps(cliques)
-
-def boundary_maps_3():
-    pass
-
-def test_ranks_and_nullities_1():
-    pass
-
-def test_ranks_and_nullities_2():
-    pass
-
-def test_ranks_and_nullities_3():
-    pass
-
-def test_get_maximal_clique_size():
-    G = nx.complete_graph(5)
-    G = nk.nxadapter.nx2nk(G)
-    print(betti_numbers.get_max_clique_size(G))
+# --- Main ---
 
 if __name__ == "__main__":
-    #test_bett_numbers_1()
-    #test_betti_numbers_2()
-    #test_betti_numbers_3()
-    #test_betti_numbers_4()
-    #test_get_colored_subgraphs_2()
-    #test_betti_numbers_5()
-    test_betti_numbers_6()
-    #test_get_maximal_clique_size()
+    cases = generate_edge_case_graphs()
+    print("Start")
+
+    for i, (G, c, exp) in enumerate(cases):
+        print(f"Case {i}:")
+        assert np.array_equal(betti_numbers(G, c), exp)

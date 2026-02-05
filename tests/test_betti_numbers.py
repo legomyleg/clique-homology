@@ -4,7 +4,7 @@ import networkit as nk
 from random import choice, seed, sample
 
 # functions to test
-from clique_homology.betti_numbers import *
+from clique_homology.stats_engine.betti_numbers import *
 
 # to visually verify the test case
 import matplotlib.pyplot as plt

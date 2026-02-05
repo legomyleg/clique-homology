@@ -17,6 +17,5 @@ data_model = "clique_homology.data_model.data_model.py:data_model_cli"
 [project.optional-dependencies]
 dev = [
     "pytest",
-    "ruff",
-    "mypy"
+    "ruff"
 ]

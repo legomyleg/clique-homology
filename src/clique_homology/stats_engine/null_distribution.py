@@ -1,7 +1,6 @@
-from .random_coloring import Color, random_coloring
+from clique_homology import random_coloring, Color, betti_numbers
 from networkit.graph import Graph # type: ignore
 import numpy as np
-from .betti_numbers import betti_numbers
 
 def null_distribution(graph: Graph, coloring: list[Color], iterations:int=100) -> list[np.ndarray]:
     

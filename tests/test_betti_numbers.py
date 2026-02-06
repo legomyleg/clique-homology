@@ -1,7 +1,7 @@
 # for generating test cases
 import networkx as nx
 import networkit as nk
-from random import choice, seed, sample
+# from random import choice, seed, sample
 
 # functions to test
 from clique_homology.stats_engine.betti_numbers import *
@@ -9,7 +9,7 @@ from clique_homology.stats_engine.betti_numbers import *
 # to visually verify the test case
 # import matplotlib.pyplot as plt
 
-seed(122)
+# seed(122)
 
 # --- Support Functions ---
 

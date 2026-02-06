@@ -1,15 +1,20 @@
 # for generating test cases
 import networkx as nx
 import networkit as nk
-# from random import choice, seed, sample
+from random import choice, seed, sample
+import pytest
+import time
+
+# zero multi-threading errors to worry about
+nk.setNumberOfThreads(1)
 
 # functions to test
 from clique_homology.stats_engine.betti_numbers import *
 
 # to visually verify the test case
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
-# seed(122)
+seed(122)
 
 # --- Support Functions ---
 
@@ -100,7 +105,7 @@ def generate_edge_case_graphs():
 
 # --- Main ---
 
-if __name__ == "__main__":
+def test_edge_case_graphs():
     cases = generate_edge_case_graphs()
     print("Start")
 
@@ -110,3 +115,31 @@ if __name__ == "__main__":
         print(obs)
         assert np.array_equal(obs, exp)
         print("passed")
+
+def test_complexity(k):
+    """
+    What kind of runtime can we expect for the C. elegans data set?
+    """
+
+    times = []
+    for _ in range(k):
+        n = 302
+        G = nx.gnm_random_graph(n, 5000)
+        G = nk.nxadapter.nx2nk(G)
+        # c1 = [choice(["red", "blue", "green"]) for _ in range(n)]
+        c2 = ["red" for _ in range(n)]
+        start = time.perf_counter()
+        print(f"n: {n}; output: {betti_numbers(G, c2)}.")
+        stop = time.perf_counter()
+        times.append(stop - start)
+
+    return times
+    
+
+
+if __name__ == "__main__":
+    print("START")
+    test_edge_case_graphs()
+    times = test_complexity(10)
+    plt.hist(times)
+    plt.show()

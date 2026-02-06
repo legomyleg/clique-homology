@@ -7,7 +7,7 @@ from random import choice, seed, sample
 from clique_homology.stats_engine.betti_numbers import *
 
 # to visually verify the test case
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 seed(122)
 

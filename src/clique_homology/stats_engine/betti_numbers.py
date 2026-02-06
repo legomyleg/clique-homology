@@ -2,7 +2,6 @@
 
 import networkit as nk
 import numpy as np
-import networkx as nx
 import itertools
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -216,13 +215,12 @@ def betti_numbers(G, colors:list, method:str="clique") -> np.ndarray:
     build simplicial complex out of all monochromatic cliques for the entire graph.
     Returns a vector of Betti numbers.
     
-    If 'subgraph1' method is specified, 
+    If 'subgraph' method is specified, 
     builds a distinct simplicial complex for each colored subgraph.
     Returns a matrix where each row vector gives the Betti numbers for a colored subgraph.
 
-    If 'subgraph2' method is specified,
-    partitions the graph by disregarding edges between nodes of different attributes, then computes
-    the homology for this new graph.
+    If the resulting matrix of the 'subgraph' method is summed by rows, it will yield the result
+    of the 'clique' method.
     
     :param G: A colored graph.
     :type G: Union[nk.Graph, nx.Graph]
@@ -230,14 +228,14 @@ def betti_numbers(G, colors:list, method:str="clique") -> np.ndarray:
     :param attr: A dictionary of node attributes, with attribute as value and node as key.
     :type attr: dict
     """
-    if method not in ["subgraph1", "subgraph2", "clique"]:
-        raise ValueError(f"Invalid method '{method}'. Expected 'subgraph1', 'subgraph2', or 'clique'.")
+    if method not in ["subgraph", "clique"]:
+        raise ValueError(f"Invalid method '{method}'. Expected 'subgraph', or 'clique'.")
 
 # note to self: a lot of this code can be refactored, and chunks can be combined between methods
 
     max_len = get_max_clique_size(G)
 
-    if method.startswith("subgraph"):
+    if method == "subgraph":
         # in this case, compute all the betti numbers separately for each colored subgraph.
         # for this one, we may want to rework it so that it simply considers colors to partition into components instead
         betti_lists = []
@@ -273,11 +271,7 @@ def betti_numbers(G, colors:list, method:str="clique") -> np.ndarray:
         padded_betti = [b + [0] * (max_len - len(b)) for b in betti_lists]
         B = np.array(padded_betti)
 
-        if method == "subgraph1":
-            return B
-        elif method == "subgraph2":
-            # aggregate Betti numbers
-            return np.sum(B, axis=0)
+        return B
 
     
     elif method == "clique":

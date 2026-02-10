@@ -115,31 +115,7 @@ def test_edge_case_graphs():
         print(obs)
         assert np.array_equal(obs, exp)
         print("passed")
-
-def test_complexity(k):
-    """
-    What kind of runtime can we expect for the C. elegans data set?
-    """
-
-    times = []
-    for _ in range(k):
-        n = 302
-        G = nx.gnm_random_graph(n, 5000)
-        G = nk.nxadapter.nx2nk(G)
-        # c1 = [choice(["red", "blue", "green"]) for _ in range(n)]
-        c2 = ["red" for _ in range(n)]
-        start = time.perf_counter()
-        print(f"n: {n}; output: {betti_numbers(G, c2)}.")
-        stop = time.perf_counter()
-        times.append(stop - start)
-
-    return times
-    
-
-
+# -------------------------------------------------
 if __name__ == "__main__":
     print("START")
     test_edge_case_graphs()
-    times = test_complexity(10)
-    plt.hist(times)
-    plt.show()

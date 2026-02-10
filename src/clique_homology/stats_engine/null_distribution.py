@@ -1,13 +1,18 @@
-from clique_homology import random_coloring, Color, betti_numbers
+from clique_homology import random_coloring, betti_numbers
 from networkit.graph import Graph # type: ignore
 import numpy as np
 
-def null_distribution(graph: Graph, coloring: list[Color], iterations:int=100) -> list[np.ndarray]:
+def null_distribution(
+    graph: Graph,
+    coloring: list[str],
+    iterations: int = 100,
+    allowed_colors: list[str] | None = None,
+) -> list[np.ndarray]:
     
     distribution: list[np.ndarray] = []
     
     for _ in range(iterations):
-        new_coloring: list[Color] = random_coloring(coloring)
-        distribution.append(betti_numbers(graph, new_coloring))
+        new_coloring = random_coloring(coloring, allowed_colors=allowed_colors)
+        distribution.append(betti_numbers(graph, new_coloring, allowed_colors=allowed_colors))
     
-    return [np.array(None)]
+    return distribution

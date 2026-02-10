@@ -52,7 +52,7 @@ def get_cliques(G:nk.Graph):
 
 # ----------------------------------------------------------------------------------------------------------------
 
-def get_colored_subgraphs(G:nk.Graph, node_colors:list):
+def get_colored_subgraphs(G:nk.Graph, node_colors:list[str]):
     """
     Return a generator for colored subgraphs of a graph G.
     
@@ -62,7 +62,7 @@ def get_colored_subgraphs(G:nk.Graph, node_colors:list):
     :type node_attr: list
     """
     # Group nodes by their attribute value - color:[nodes] key-value pairs
-    node_subsets = {}
+    node_subsets: dict[str, list[int]] = {}
     for node, color in enumerate(node_colors):
         if color not in node_subsets:
             node_subsets[color] = [node]
@@ -207,7 +207,43 @@ def ranks_and_nullities(M:np.array) -> tuple:
 
 # ----------------------------------------------------------------------------------------------------------------
 
-def betti_numbers(G, colors:list, method:str="clique") -> np.ndarray:
+def _validate_colors(
+    G: nk.Graph,
+    colors: list[str],
+    allowed_colors: list[str] | None = None,
+) -> None:
+    if len(colors) != G.numberOfNodes():
+        raise ValueError(
+            f"Coloring length ({len(colors)}) must match number of graph nodes ({G.numberOfNodes()})."
+        )
+
+    if not all(isinstance(color, str) for color in colors):
+        raise TypeError("All node colors must be strings.")
+
+    if allowed_colors is None:
+        return
+
+    if not all(isinstance(color, str) for color in allowed_colors):
+        raise TypeError("All allowed color values must be strings.")
+
+    allowed_set = set(allowed_colors)
+    if not allowed_set and colors:
+        raise ValueError("Allowed color palette is empty but graph coloring is not.")
+
+    invalid = sorted({color for color in colors if color not in allowed_set})
+    if invalid:
+        raise ValueError(
+            "Found colors outside the allowed palette: "
+            + ", ".join(invalid)
+        )
+
+
+def betti_numbers(
+    G: nk.Graph,
+    colors: list[str],
+    method: str = "clique",
+    allowed_colors: list[str] | None = None,
+) -> np.ndarray:
     """
     Compute the Betti numbers of a colored graph. 
 
@@ -230,6 +266,7 @@ def betti_numbers(G, colors:list, method:str="clique") -> np.ndarray:
     """
     if method not in ["subgraph", "clique"]:
         raise ValueError(f"Invalid method '{method}'. Expected 'subgraph', or 'clique'.")
+    _validate_colors(G, colors, allowed_colors)
 
 # note to self: a lot of this code can be refactored, and chunks can be combined between methods
 

@@ -8,7 +8,9 @@ def null_distribution(
     iterations: int = 100,
     allowed_colors: list[str] | None = None,
 ) -> list[np.ndarray]:
-    
+    if iterations < 0:
+        raise ValueError("iterations must be non-negative.")
+
     distribution: list[np.ndarray] = []
     
     for _ in range(iterations):

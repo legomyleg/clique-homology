@@ -25,7 +25,7 @@ def random_coloring(
         _validate_palette(allowed_colors)
         palette = allowed_colors
     else:
-        palette = list(set(colors))
+        palette = list(colors) if proportional else list(set(colors))
 
     if not palette and colors:
         raise ValueError("Color palette is empty but colors were provided.")

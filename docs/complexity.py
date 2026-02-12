@@ -1,6 +1,6 @@
 import time
-import networkit as nk
-import networkx as nx
+import networkit as nk # type: ignore
+import networkx as nx # type: ignore
 import matplotlib.pyplot as plt
 
 from clique_homology.stats_engine.betti_numbers import betti_numbers

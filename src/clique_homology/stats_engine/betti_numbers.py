@@ -3,6 +3,12 @@
 import networkit as nk
 import numpy as np
 import itertools
+from typing import Mapping, Sequence
+
+Vertex = int
+Clique = tuple[Vertex, ...]
+CliqueLike = Sequence[Vertex]
+CliqueList = Sequence[CliqueLike]
 
 # ----------------------------------------------------------------------------------------------------------------
 
@@ -75,36 +81,36 @@ def get_colored_subgraphs(G:nk.Graph, node_colors:list[str]):
 
 # ----------------------------------------------------------------------------------------------------------------
 
-def boundary_maps(cliques:list) -> list:
+def boundary_maps(cliques: CliqueList) -> list[np.ndarray]:
     """
     Construct the boundary maps D_k given a complete list of cliques (simplicies).
     
-    :param cliques: A complete list of cliques for a graph. Cliques should be lists of vertices.
-    :type cliques: list
-    :return: a tuple of numpy arrays. These are the boundary maps D_k for each k.
-    :rtype: tuple
+    :param cliques: A complete list of cliques for a graph.
+    :type cliques: Sequence[Sequence[int]]
+    :return: A list of numpy arrays. These are the boundary maps D_k for each k.
+    :rtype: list[np.ndarray]
     """
-    canonical_cliques = sorted(
+    canonical_cliques: list[Clique] = sorted(
         {tuple(sorted(clique)) for clique in cliques},
         key=lambda clique: (len(clique), clique),
     )
 
-    def clique_order(cliques:list) -> list:
+    def clique_order(cliques: Sequence[Clique]) -> list[dict[Clique, int]]:
         """
         Define an ordering for each clique with respect to the other cliques of their given size.
         This will be used to construct the boundary maps.
         
-        :param cliques: Description
-        :type cliques: list
-        :return: A tuple of dictionaries, one for each size of clique: tuple(dict(tuple:int), ...)
-        :rtype: tuple
+        :param cliques: Canonically sorted cliques.
+        :type cliques: Sequence[tuple[int, ...]]
+        :return: A list of dictionaries, one for each clique size.
+        :rtype: list[dict[tuple[int, ...], int]]
         """
 
         if not cliques:
             return []
 
         max_clique_size = len(cliques[-1])
-        result = [{} for _ in range(max_clique_size)]
+        result = [dict() for _ in range(max_clique_size)]
 
         for clique in cliques:
             size_index = len(clique) - 1
@@ -112,16 +118,19 @@ def boundary_maps(cliques:list) -> list:
 
         return result
 
-    def build_map(position_dict1, position_dict2) -> np.ndarray:
+    def build_map(
+        position_dict1: Mapping[Clique, int],
+        position_dict2: Mapping[Clique, int],
+    ) -> np.ndarray:
         """
         Construct a boundary map from position_dict1 to position_dict2.
         
         :param position_dict1: Dictionary of positions for (k-1)-cliques.
-        :type position_dict1: dict
+        :type position_dict1: Mapping[tuple[int, ...], int]
         :param position_dict2: Dictionary of positions for (k)-cliques.
-        :type position_dict2: dict
-        :return: Description
-        :rtype: Any
+        :type position_dict2: Mapping[tuple[int, ...], int]
+        :return: Boundary map matrix.
+        :rtype: np.ndarray
         """
 
         # We are mapping from the (k-1)-cliques (nrow) to the k-cliques (ncol) 
@@ -237,7 +246,7 @@ def betti_numbers(
     colors: list[str],
     method: str = "clique",
     allowed_colors: list[str] | None = None,
-) -> np.ndarray:
+) -> np.ndarray: # type: ignore
     """
     Compute the Betti numbers of a colored graph. 
 
@@ -274,7 +283,7 @@ def betti_numbers(
 
             # get the maps for each subgraph
             cliques = [clique for clique in get_cliques(subgraph)]
-            maps = boundary_maps(cliques)
+            maps: list[np.ndarray] = boundary_maps(cliques)
 
             ranks, nullities = [], []
             for boundary_map in maps:
@@ -311,7 +320,7 @@ def betti_numbers(
     elif method == "clique":
         # the difference here is we compute the cliques, aggregate them, then compute the homology
         cliques = sorted([clique for H in get_colored_subgraphs(G, colors) for clique in get_cliques(H)], key=len)
-        maps = boundary_maps(cliques)
+        maps: list[np.ndarray] = boundary_maps(cliques)
         ranks, nullities = [], []
 
         for boundary_map in maps:

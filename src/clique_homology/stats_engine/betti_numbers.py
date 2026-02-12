@@ -61,9 +61,10 @@ def get_colored_subgraphs(G:nk.Graph, node_colors:list[str]):
     :param node_attr: A dictionary mapping node IDs to their attribute (color).
     :type node_attr: list
     """
-    # Group nodes by their attribute value - color:[nodes] key-value pairs
+    # Group nodes by their attribute value - color:[nodes] key-value pairs.
+    # Use graph node IDs from iterNodes() to support graphs with non-contiguous IDs.
     node_subsets: dict[str, list[int]] = {}
-    for node, color in enumerate(node_colors):
+    for node, color in zip(G.iterNodes(), node_colors):
         if color not in node_subsets:
             node_subsets[color] = [node]
         else:
@@ -83,6 +84,11 @@ def boundary_maps(cliques:list) -> list:
     :return: a tuple of numpy arrays. These are the boundary maps D_k for each k.
     :rtype: tuple
     """
+    canonical_cliques = sorted(
+        {tuple(sorted(clique)) for clique in cliques},
+        key=lambda clique: (len(clique), clique),
+    )
+
     def clique_order(cliques:list) -> list:
         """
         Define an ordering for each clique with respect to the other cliques of their given size.
@@ -100,21 +106,9 @@ def boundary_maps(cliques:list) -> list:
         max_clique_size = len(cliques[-1])
         result = [{} for _ in range(max_clique_size)]
 
-        # track the current dictionary in result
-        i = 0
-        # track the positions we are assigning for the current dictionary
-        j = 0
-        # track the current size clique
-        k = 1
         for clique in cliques:
-            if len(clique) > k:
-                k = len(clique)
-                i += 1
-                j = 0
-            
-            # assign the index j to the clique in the i-th dictionary in result
-            result[i][clique] = j
-            j += 1
+            size_index = len(clique) - 1
+            result[size_index][clique] = len(result[size_index])
 
         return result
 
@@ -145,7 +139,7 @@ def boundary_maps(cliques:list) -> list:
 
         return M
 
-    positions = clique_order(cliques)
+    positions = clique_order(canonical_cliques)
     return [build_map(positions[k-1], positions[k]) for k in range(1, len(positions))]
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -306,7 +300,10 @@ def betti_numbers(
         # pad with zeros
         # a matrix of betti numbers
         padded_betti = [b + [0] * (max_len - len(b)) for b in betti_lists]
-        B = np.array(padded_betti)
+        if padded_betti:
+            B = np.array(padded_betti)
+        else:
+            B = np.zeros((0, max_len), dtype=int)
 
         return B
 

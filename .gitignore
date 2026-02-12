@@ -52,4 +52,5 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+results.json
 

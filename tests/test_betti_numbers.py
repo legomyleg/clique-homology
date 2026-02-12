@@ -1,6 +1,6 @@
 # for generating test cases
-import networkx as nx
-import networkit as nk
+import networkx as nx # type: ignore
+import networkit as nk # type: ignore
 from random import choice, seed, sample
 import pytest
 import time
@@ -115,6 +115,36 @@ def test_edge_case_graphs():
         print(obs)
         assert np.array_equal(obs, exp)
         print("passed")
+
+
+def test_betti_numbers_handles_non_contiguous_node_ids() -> None:
+    # Build a connected path on node IDs [0, 2, 3, 4].
+    graph = nk.Graph(5, weighted=False, directed=False)
+    graph.addEdge(0, 2)
+    graph.addEdge(2, 3)
+    graph.addEdge(3, 4)
+    graph.removeNode(1)
+
+    colors = ["red", "red", "red", "red"]
+    observed = betti_numbers(graph, colors, method="clique")
+
+    assert np.array_equal(observed, np.array([1, 0]))
+
+
+def test_subgraph_method_empty_graph_returns_matrix_shape() -> None:
+    graph = nk.Graph()
+    observed = betti_numbers(graph, [], method="subgraph")
+
+    assert observed.ndim == 2
+    assert observed.shape == (0, 0)
+
+
+def test_boundary_maps_accept_unsorted_complete_cliques() -> None:
+    maps = boundary_maps([(0, 1), (0,), (1,)])
+
+    assert len(maps) == 1
+    assert maps[0].shape == (2, 1)
+    assert maps[0].sum() == 2
 # -------------------------------------------------
 if __name__ == "__main__":
     print("START")

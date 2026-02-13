@@ -77,6 +77,7 @@ def calculate_p_vector(obs_betti, null_betti_matrix):
     # 5. Calculate Distances for Null Distribution (The Background)
     # (Vectorized implementation for speed)
     diff_null = clean_null - mu_null
+    
     # Einsum is a fast way to do row-wise Mahalanobis
     d2_null = np.einsum('ij,jk,ik->i', diff_null, inv_cov, diff_null)
     

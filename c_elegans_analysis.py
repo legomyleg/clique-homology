@@ -15,6 +15,6 @@ if __name__ == "__main__":
     for u, v in edges:
         g.addEdge(u, v)
     g.removeSelfLoops()
-    print("P-value:", stats_engine(g, colors, iters=100))
+    print("P-value:", stats_engine(g, colors, iters=2000))
     print("Number of nodes:", num_nodes)
     print("Number of edges:", len(edges))

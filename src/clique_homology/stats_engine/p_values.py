@@ -60,9 +60,10 @@ def calculate_p_vector(obs_betti, null_betti_matrix):
     
     clean_obs, clean_null = _validate_p_vector_inputs(obs_betti, null_betti_matrix)
     
+    clean_null2 = np.vstack((clean_obs, clean_null))
     # 2. Calculate Null Statistics
-    mu_null = np.mean(clean_null, axis=0)
-    cov_null = np.atleast_2d(np.cov(clean_null, rowvar=False))
+    mu_null = np.mean(clean_null2, axis=0)
+    cov_null = np.atleast_2d(np.cov(clean_null2, rowvar=False))
     
     # Inverse Covariance (Precision Matrix)
     # Use pseudo-inverse if n < m, otherwise standard inv

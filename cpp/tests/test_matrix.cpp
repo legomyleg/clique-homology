@@ -7,7 +7,7 @@
 void test_bit_boundaries() {
     std::cout << "Running Test 1: 64-bit Chunk Boundaries..." << std::endl;
     // 2 rows, 130 columns (Forces the matrix to use 3 integers per row)
-    Bin_Matrix mat(2, 130); 
+    BinaryMatrix mat(2, 130); 
     
     // Test the edges of the first and second chunks
     mat.one(0, 63); // Very last bit of chunk 0
@@ -26,7 +26,7 @@ void test_bit_boundaries() {
 
 void test_gf2_cancellation() {
     std::cout << "Running Test 2: GF(2) Linear Dependence..." << std::endl;
-    Bin_Matrix mat(3, 3);
+    BinaryMatrix mat(3, 3);
     
     // Row 0: [1, 1, 0]
     mat.one(0, 0); mat.one(0, 1);
@@ -35,8 +35,10 @@ void test_gf2_cancellation() {
     // Row 2: [0, 1, 1]
     mat.one(2, 1); mat.one(2, 2);
 
+    mat.print();
+
     // Because Row 0 ^ Row 1 == Row 2 in GF(2), 
-    // Row 2 is linearly dependent and should completely zero out!
+    // Row 2 is linearly dependent and should completely zero out
     auto [rank, nullity] = mat.row_reduce();
     
     assert(rank == 2);
@@ -46,12 +48,14 @@ void test_gf2_cancellation() {
 void test_empty_and_identity() {
     std::cout << "Running Test 3: Zero and Identity Matrices..." << std::endl;
     
-    Bin_Matrix zero_mat(5, 5);
+    BinaryMatrix zero_mat(5, 5);
     auto [z_rank, z_null] = zero_mat.row_reduce();
     assert(z_rank == 0);
     assert(z_null == 5);
 
-    Bin_Matrix id_mat(4, 4);
+    zero_mat.print();
+
+    BinaryMatrix id_mat(4, 4);
     for (size_t i = 0; i < 4; i++) id_mat.one(i, i);
     auto [id_rank, id_null] = id_mat.row_reduce();
     assert(id_rank == 4);
@@ -60,18 +64,18 @@ void test_empty_and_identity() {
 
 void test_cache_invalidation() {
     std::cout << "Running Test 4: Cache Invalidation..." << std::endl;
-    Bin_Matrix mat(3, 3);
+    BinaryMatrix mat(3, 3);
     
     // Start with a zero matrix
     auto [rank1, null1] = mat.row_reduce();
     assert(rank1 == 0);
 
-    // Modify the matrix (this should flip row_reduced to false!)
+    // Modify the matrix (this should flip row_reduced to false)
     mat.one(0, 0);
     mat.one(1, 1);
     mat.one(2, 2);
 
-    // Re-reduce. If the cache bug is there, it will incorrectly return 0.
+    // Re-reduce. If the cache bug is there, it will incorrectly return 0
     auto [rank2, null2] = mat.row_reduce();
     assert(rank2 == 3); 
     assert(null2 == 0);
@@ -79,7 +83,7 @@ void test_cache_invalidation() {
 
 void test_out_of_bounds() {
     std::cout << "Running Test 5: Out of Bounds Exceptions..." << std::endl;
-    Bin_Matrix mat(2, 2);
+    BinaryMatrix mat(2, 2);
     bool caught = false;
     
     try {
@@ -90,17 +94,74 @@ void test_out_of_bounds() {
     assert(caught == true);
 }
 
+void test_vec() {
+    // test if it can properly print a vector or not
+    std::cout << "Running Test 6: Vectors..." << std::endl;
+
+    BinaryMatrix row_vec(1, 5);
+    BinaryMatrix col_vec(5, 1);
+
+    row_vec.one(0, 2);
+    col_vec.one(3, 0);
+
+    row_vec.print();
+    col_vec.print();
+
+    // make sure that row reducing doesn't have trouble with 1 dimensional vectors
+    auto [rank1, nullity1] = row_vec.row_reduce();
+    auto [rank2, nullity2] = col_vec.row_reduce();
+
+    assert(rank1 == 1);
+    assert(nullity1 == 4);
+
+    assert(rank2 == 1);
+    assert(nullity2 == 0);
+
+}
+
+void test_mat_ops() {
+    std::cout << "Running Test 7: Matrix Operations..." << std::endl;
+    BinaryMatrix A(2, 2);
+    BinaryMatrix B(2, 2);
+    BinaryMatrix C(2, 2);
+
+    // make sure == works
+
+    assert(A == B);
+    assert(B == C);
+
+    // identity matrices
+    A.one(0, 0);
+    A.one(1, 1);
+
+    B.one(0, 0);
+    B.one(1, 1);
+
+    // adding should give the zero matrix
+    assert(A + B == C);
+
+    // can operate on oneself
+    assert(A + A == C);
+
+    // multiplying should give back the identity
+    assert(A * B == A && A * B == B);
+    assert(A * A == A);
+
+}
+
 int main() {
-    std::cout << "--- Starting Bin_Matrix Test Suite ---" << std::endl;
+    std::cout << "--- Starting BinaryMatrix Test Suite ---" << std::endl;
     
     test_bit_boundaries();
     test_gf2_cancellation();
     test_empty_and_identity();
     test_cache_invalidation();
     test_out_of_bounds();
+    test_vec();
+    test_mat_ops();
 
     std::cout << "--------------------------------------" << std::endl;
-    std::cout << "SUCCESS: All tests passed! Your matrix is rock solid." << std::endl;
+    std::cout << "Passed." << std::endl;
     
     return 0;
 }

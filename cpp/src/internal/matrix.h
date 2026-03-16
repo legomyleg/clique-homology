@@ -3,10 +3,13 @@
 #include <stdexcept>
 #include <bit>
 #include <utility>
+#include <iostream>
+#include <string>
 
-using std::vector, std::pair, std::__countr_zero;
+using std::vector, std::pair, 
+std::__countr_zero, std::cout, std::endl, std::string;
 
-class Bin_Matrix {
+class BinaryMatrix {
 
     // matrix consisting of elements from the binary field {0, 1}
     private:
@@ -63,7 +66,7 @@ class Bin_Matrix {
 
     public:
         // constructor initializes to zero matrix of given dimensions
-        Bin_Matrix(size_t r, size_t c) 
+        BinaryMatrix(size_t r, size_t c) 
         : rows(r), 
           cols(c), 
           col_ints((c+63)/64),
@@ -80,17 +83,77 @@ class Bin_Matrix {
             // shift the bits, AND it against 1
             bool value = (data[chunk_i] >> bit_offset) & 1ULL;
             return value;
-
         }
 
+        // perform matrix addition
+        BinaryMatrix operator+(const BinaryMatrix& other) const {
+            if (rows != other.rows || cols != other.cols) {
+                throw std::invalid_argument("matrices must have matching dimensions.");
+            }
+
+            // iterate through each chunk and XOR them
+            // make a copy of the matrix
+            BinaryMatrix result = *this;
+            for (size_t i = 0; i < data.size(); i++) {
+                // XOR adds component-wise
+                result.data[i] ^= other.data[i];
+            }
+
+            return result;
+        }
+
+        // perform matrix multiplication
+        BinaryMatrix operator*(const BinaryMatrix& other) const {
+            // A's columns MUST equal B's rows
+            if (cols != other.rows) {
+                throw std::invalid_argument("Inner matrix dimensions are unequal");
+            }
+        
+            // initialize resulting matrix product
+            BinaryMatrix result(rows, other.cols);
+        
+            for (size_t i = 0; i < rows; i++) {
+                for (size_t j = 0; j < cols; j++) {
+
+                    // If A(i, j) is 1, we XOR the entire j-th row of B into the i-th row of Result
+                    if ((*this)(i, j) == 1) {
+
+                        size_t result_start = i * result.col_ints;
+                        size_t b_start = j * other.col_ints;
+                    
+                        // Fast chunk-by-chunk XOR
+                        for (size_t chunk = 0; chunk < result.col_ints; chunk++) {
+                            result.data[result_start + chunk] ^= other.data[b_start + chunk];
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+
+        bool operator==(const BinaryMatrix& other) const {
+            for (size_t i = 0; i < data.size(); i++) {
+                if (data[i] != other.data[i]) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+
+
+        size_t nrows() const {return rows;}
+        size_t ncols() const {return cols;}
+
         // make the value at (i, j) a one
+        // useful for constructing the boundary maps
         void one(size_t i, size_t j) {
             if (i >= rows || j >= cols) {throw std::out_of_range("i,j out of bounds.");}
 
             // matrix is changed, it isn't row_reduced anymore
             row_reduced = false;
 
-            // useful for constructing the boundary maps
             size_t chunk_i = (i*col_ints) + (j/64);
             size_t bit_offset = j % 64;
 
@@ -120,7 +183,12 @@ class Bin_Matrix {
         }
 
         pair<size_t, size_t> row_reduce() {
+            // row reduce the matrix to RREF, compute and return rank and nullity.
+
+
             // don't recompute if unnecessary
+            // row_reduced is false by default and will reset to false whenever matrix is manipulated
+            // you can row reduce, then modify the matrix, then row reduce again, recomputing rank and nullity
             if (row_reduced) {
                 return {rank, nullity};
             } else {
@@ -167,6 +235,32 @@ class Bin_Matrix {
             row_reduced = true;
             return {rank, nullity};
 
+        }
+
+        void print() {
+            // print the matrix to the console
+            cout << "[";
+            for (size_t i = 0; i < rows; i++) {
+
+                if (i != 0){cout << " ";}
+
+                for (size_t j = 0; j < cols; j++) {
+
+                    // print the row
+                    cout << (*this)(i, j);
+
+                    if (i != rows-1 || j != cols-1) {
+                        cout << " ";
+                    }
+                }
+
+                // if it's the last line put closing bracket; otherwise end line
+                if (i != rows-1) {
+                    cout << endl;
+                } else {
+                    cout << "]" << endl;
+                }
+            }
         }
 
 };

@@ -1,1 +1,106 @@
-#include <matrix.h>
+#include <iostream>
+#include <cassert>
+#include <vector>
+#include <utility>
+#include "../src/internal/matrix.h"
+
+void test_bit_boundaries() {
+    std::cout << "Running Test 1: 64-bit Chunk Boundaries..." << std::endl;
+    // 2 rows, 130 columns (Forces the matrix to use 3 integers per row)
+    Bin_Matrix mat(2, 130); 
+    
+    // Test the edges of the first and second chunks
+    mat.one(0, 63); // Very last bit of chunk 0
+    mat.one(0, 64); // Very first bit of chunk 1
+    mat.one(1, 129); // Very last column in the matrix
+
+    assert(mat(0, 63) == 1);
+    assert(mat(0, 64) == 1);
+    assert(mat(0, 65) == 0); // Ensure neighbors aren't bleeding
+    assert(mat(1, 129) == 1);
+    
+    // Test zeroing
+    mat.zero(0, 64);
+    assert(mat(0, 64) == 0);
+}
+
+void test_gf2_cancellation() {
+    std::cout << "Running Test 2: GF(2) Linear Dependence..." << std::endl;
+    Bin_Matrix mat(3, 3);
+    
+    // Row 0: [1, 1, 0]
+    mat.one(0, 0); mat.one(0, 1);
+    // Row 1: [1, 0, 1]
+    mat.one(1, 0); mat.one(1, 2);
+    // Row 2: [0, 1, 1]
+    mat.one(2, 1); mat.one(2, 2);
+
+    // Because Row 0 ^ Row 1 == Row 2 in GF(2), 
+    // Row 2 is linearly dependent and should completely zero out!
+    auto [rank, nullity] = mat.row_reduce();
+    
+    assert(rank == 2);
+    assert(nullity == 1); // 3 columns - 2 rank = 1
+}
+
+void test_empty_and_identity() {
+    std::cout << "Running Test 3: Zero and Identity Matrices..." << std::endl;
+    
+    Bin_Matrix zero_mat(5, 5);
+    auto [z_rank, z_null] = zero_mat.row_reduce();
+    assert(z_rank == 0);
+    assert(z_null == 5);
+
+    Bin_Matrix id_mat(4, 4);
+    for (size_t i = 0; i < 4; i++) id_mat.one(i, i);
+    auto [id_rank, id_null] = id_mat.row_reduce();
+    assert(id_rank == 4);
+    assert(id_null == 0);
+}
+
+void test_cache_invalidation() {
+    std::cout << "Running Test 4: Cache Invalidation..." << std::endl;
+    Bin_Matrix mat(3, 3);
+    
+    // Start with a zero matrix
+    auto [rank1, null1] = mat.row_reduce();
+    assert(rank1 == 0);
+
+    // Modify the matrix (this should flip row_reduced to false!)
+    mat.one(0, 0);
+    mat.one(1, 1);
+    mat.one(2, 2);
+
+    // Re-reduce. If the cache bug is there, it will incorrectly return 0.
+    auto [rank2, null2] = mat.row_reduce();
+    assert(rank2 == 3); 
+    assert(null2 == 0);
+}
+
+void test_out_of_bounds() {
+    std::cout << "Running Test 5: Out of Bounds Exceptions..." << std::endl;
+    Bin_Matrix mat(2, 2);
+    bool caught = false;
+    
+    try {
+        mat.one(5, 5); // Should throw
+    } catch (const std::out_of_range& e) {
+        caught = true;
+    }
+    assert(caught == true);
+}
+
+int main() {
+    std::cout << "--- Starting Bin_Matrix Test Suite ---" << std::endl;
+    
+    test_bit_boundaries();
+    test_gf2_cancellation();
+    test_empty_and_identity();
+    test_cache_invalidation();
+    test_out_of_bounds();
+
+    std::cout << "--------------------------------------" << std::endl;
+    std::cout << "SUCCESS: All tests passed! Your matrix is rock solid." << std::endl;
+    
+    return 0;
+}

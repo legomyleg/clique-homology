@@ -87,6 +87,9 @@ class Bin_Matrix {
         void one(size_t i, size_t j) {
             if (i >= rows || j >= cols) {throw std::out_of_range("i,j out of bounds.");}
 
+            // matrix is changed, it isn't row_reduced anymore
+            row_reduced = false;
+
             // useful for constructing the boundary maps
             size_t chunk_i = (i*col_ints) + (j/64);
             size_t bit_offset = j % 64;
@@ -102,6 +105,9 @@ class Bin_Matrix {
         void zero(size_t i, size_t j) {
             if (i >= rows || j >= cols) {throw std::out_of_range("i,j out of bounds.");}
 
+            // matrix is changed, it isn't row reduced anymore
+            row_reduced = false;
+
             size_t chunk_i = (i*col_ints) + (j/64);
             size_t bit_offset = j % 64;
 
@@ -115,7 +121,12 @@ class Bin_Matrix {
 
         pair<size_t, size_t> row_reduce() {
             // don't recompute if unnecessary
-            if (row_reduced) {return {rank, nullity};}
+            if (row_reduced) {
+                return {rank, nullity};
+            } else {
+                rank = 0;
+                nullity = cols;
+            }
 
             size_t curr_row = 0;
 
@@ -153,6 +164,7 @@ class Bin_Matrix {
                 curr_row++;
             }
 
+            row_reduced = true;
             return {rank, nullity};
 
         }

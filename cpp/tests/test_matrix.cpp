@@ -37,7 +37,7 @@ void test_gf2_cancellation() {
 
     mat.print();
 
-    // Because Row 0 ^ Row 1 == Row 2 in GF(2), 
+    // Because Row 0 ^ Row 1 == Row 2, 
     // Row 2 is linearly dependent and should completely zero out
     auto [rank, nullity] = mat.row_reduce();
     
@@ -146,6 +146,12 @@ void test_mat_ops() {
     // multiplying should give back the identity
     assert(A * B == A && A * B == B);
     assert(A * A == A);
+
+    BinaryMatrix row(1, 2);
+    row.one(0, 0);
+
+    // does my row extraction logic work properly
+    assert(A.row_i(0) == row);
 
 }
 

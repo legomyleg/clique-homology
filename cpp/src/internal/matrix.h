@@ -132,6 +132,11 @@ class BinaryMatrix {
         }
 
         bool operator==(const BinaryMatrix& other) const {
+            if (rows != other.rows || cols != other.cols) {
+                throw std::invalid_argument("Inner matrix dimensions are unequal");
+            }
+
+            // test for equality component-wise
             for (size_t i = 0; i < data.size(); i++) {
                 if (data[i] != other.data[i]) {
                     return false;
@@ -142,9 +147,21 @@ class BinaryMatrix {
         }
 
 
-
+        // access number of rows and columns, if needed
         size_t nrows() const {return rows;}
         size_t ncols() const {return cols;}
+
+        BinaryMatrix row_i (size_t i) const {
+            // return row i as a Binary Matrix
+            BinaryMatrix output(1, cols);
+
+            auto start = col_ints * i;
+            auto end = col_ints * i + col_ints;
+            output.data = vector<uint64_t>(data.begin() + start, data.begin() + end);
+
+            return output;
+
+        }
 
         // make the value at (i, j) a one
         // useful for constructing the boundary maps

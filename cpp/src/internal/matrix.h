@@ -254,30 +254,44 @@ class BinaryMatrix {
 
         }
 
-        void print() {
+        void print(bool verbose) {
             // print the matrix to the console
-            cout << "[";
-            for (size_t i = 0; i < rows; i++) {
+            if (verbose) {
+                cout << "BinaryMatrix([" << endl;
+                for (size_t i = 0; i < rows; i++) {
 
-                if (i != 0){cout << " ";}
+                    cout << "  "; // offset
 
-                for (size_t j = 0; j < cols; j++) {
+                    for (size_t j = 0; j < cols; j++) {
 
-                    // print the row
-                    cout << (*this)(i, j);
+                        // print the row
+                        cout << (*this)(i, j);
 
-                    if (i != rows-1 || j != cols-1) {
-                        cout << " ";
+                        if (i != rows-1 || j != cols-1) {
+                            cout << " ";
+                        }
                     }
-                }
 
-                // if it's the last line put closing bracket; otherwise end line
-                if (i != rows-1) {
                     cout << endl;
-                } else {
-                    cout << "]" << endl;
                 }
+                cout << "])" << endl;
+                cout << "Rows: " << rows << ", Columns: " << cols << "." << endl;
+            } else {
+                for (size_t i = 0; i < rows; i++) {
+
+                    for (size_t j = 0; j < cols; j++) {
+
+                        // print the row
+                        cout << (*this)(i, j);
+
+                        if (i != rows-1 || j != cols-1) {
+                            cout << " ";
+                        }
+                    }
+
+                    cout << endl;
             }
         }
+    }
 
 };

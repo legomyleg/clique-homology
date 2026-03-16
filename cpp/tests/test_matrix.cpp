@@ -35,7 +35,7 @@ void test_gf2_cancellation() {
     // Row 2: [0, 1, 1]
     mat.one(2, 1); mat.one(2, 2);
 
-    mat.print();
+    mat.print(true);
 
     // Because Row 0 ^ Row 1 == Row 2, 
     // Row 2 is linearly dependent and should completely zero out
@@ -53,7 +53,7 @@ void test_empty_and_identity() {
     assert(z_rank == 0);
     assert(z_null == 5);
 
-    zero_mat.print();
+    zero_mat.print(false);
 
     BinaryMatrix id_mat(4, 4);
     for (size_t i = 0; i < 4; i++) id_mat.one(i, i);
@@ -104,8 +104,8 @@ void test_vec() {
     row_vec.one(0, 2);
     col_vec.one(3, 0);
 
-    row_vec.print();
-    col_vec.print();
+    row_vec.print(false);
+    col_vec.print(false);
 
     // make sure that row reducing doesn't have trouble with 1 dimensional vectors
     auto [rank1, nullity1] = row_vec.row_reduce();

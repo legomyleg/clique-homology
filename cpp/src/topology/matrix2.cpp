@@ -1,5 +1,5 @@
 // rewrite the binary matrix class to sparse implementation
-// vector<vector<int>> a vector of columns, where each column contains the row indices that are non-zero
+// vector<vector<int>> a vector of rows, where each row contains the column indices that are non-zero
 
 #include <vector>
 #include <utility>
@@ -33,9 +33,9 @@ class Sparse_Binary_Matrix {
           data(new_data) {}
 
         void one(size_t i, size_t j) {
-            if (j >= data.size()) {throw std::out_of_range("j is out of bounds");}
+            if (i >= data.size()) {throw std::out_of_range("i is out of bounds");}
             // insert a 1 at position (i, j) in the matrix
-            data[j].push_back(i);
+            data[i].push_back(j);
             is_row_reduced = false;
         }
 
@@ -44,8 +44,10 @@ class Sparse_Binary_Matrix {
             else {rank = 0; nullity = cols;}
 
             unsigned int curr_row = 0;
-            
 
+            // do row-reduction algorithm
+
+            return {rank, nullity};
 
         }
 

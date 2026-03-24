@@ -117,6 +117,8 @@ void test_vec() {
     assert(rank2 == 1);
     assert(nullity2 == 0);
 
+    assert(row_vec*col_vec == BinaryMatrix(1, 1));
+
 }
 
 void test_mat_ops() {
@@ -153,7 +155,24 @@ void test_mat_ops() {
     // does my row extraction logic work properly
     assert(A.row_i(0) == row);
 
+    // test boolean comparison for 1x1 matrices
+    BinaryMatrix one_by_one_true(1, 1);
+    one_by_one_true.one(0, 0);
+    BinaryMatrix one_by_one_false(1, 1);
+
+    assert(one_by_one_true == 1);
+    assert(one_by_one_false == 0);
+    assert(!(one_by_one_true == 0));
+    assert(!(one_by_one_false == 1));
+
+    // test the other way around
+    assert(1 == one_by_one_true);
+    assert(0 == one_by_one_false);
+    assert(!(0 == one_by_one_true));
+    assert(!(1 == one_by_one_false));
+
 }
+
 
 int main() {
     std::cout << "--- Starting BinaryMatrix Test Suite ---" << std::endl;

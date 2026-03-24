@@ -1,6 +1,7 @@
 from clique_homology.stats_engine.stats_engine import stats_engine
 from docs.data.c_elegans_colors import c_elegans_colors
 from docs.data.c_elegans_edges import c_elegans_edges
+from pandas import DataFrame
 
 import networkit as nk
 
@@ -15,6 +16,12 @@ if __name__ == "__main__":
     for u, v in edges:
         g.addEdge(u, v)
     g.removeSelfLoops()
-    print("P-value:", stats_engine(g, colors, iters=2000))
+
+    # save to a data frame
+    p, obs, dist = stats_engine(g, colors, iters=2000)
+    df = DataFrame(dist)
+    df.to_csv("null_distribution_celegans.csv", header=False, index=False)
+
+    print("P-value:", p)
     print("Number of nodes:", num_nodes)
     print("Number of edges:", len(edges))

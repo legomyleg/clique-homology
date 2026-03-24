@@ -54,9 +54,23 @@ def calculate_p_vector(obs_betti, null_betti_matrix):
     
     clean_obs, clean_null = _validate_p_vector_inputs(obs_betti, null_betti_matrix)
     
+<<<<<<< HEAD
     # Calculate null statistics
     mu_null = np.mean(clean_null, axis=0)
     cov_null = np.atleast_2d(np.cov(clean_null, rowvar=False))
+=======
+    clean_null2 = np.vstack((clean_obs, clean_null))
+    # 2. Calculate Null Statistics
+    mu_null = np.mean(clean_null2, axis=0)
+    cov_null = np.atleast_2d(np.cov(clean_null2, rowvar=False))
+    
+    # Inverse Covariance (Precision Matrix)
+    # Use pseudo-inverse if n < m, otherwise standard inv
+    try:
+        inv_cov = np.linalg.inv(cov_null)
+    except np.linalg.LinAlgError:
+        inv_cov = np.linalg.pinv(cov_null)
+>>>>>>> 2e262e5be920a5d789d624c35563093031a7de5f
 
     # --- REGULARIZATION STEP ---
     # Add a small value to the diagonal of the covariance matrix

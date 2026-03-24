@@ -29,17 +29,20 @@ def get_cliques(G:nk.Graph):
     """
 
     # this part seems like it isn't the most efficient 
-    # since we check so many duplicate cliques. 
-    # Maybe have to look at different methods for this: write a custom bottom-up approach instead
+    #   since we check so many duplicate cliques. 
+    # Maybe have to look at different methods for this:
+    #   write a custom bottom-up approach instead
     all_cliques = set()
     def collect_subcliques(C):
         for r in range(1, len(C)+1):
             for subset in itertools.combinations(C, r):
                 all_cliques.add(tuple(sorted(subset)))
 
-    # Find maximal cliques
-    # the callback function runs when every maximal clique is found.
-    clique_finder = nk.clique.MaximalCliques(G, maximumOnly=False, callback=collect_subcliques)
+    # Find maximal cliques:
+    #   the callback function runs when every maximal
+    #   clique is found.
+    clique_finder = nk.clique.MaximalCliques(G,
+         maximumOnly=False, callback=collect_subcliques)
     clique_finder.run()
 
     all_cliques = sorted(list(all_cliques), key=len)
@@ -271,8 +274,10 @@ def betti_numbers(
     max_len = get_max_clique_size(G)
 
     if method == "subgraph":
-        # in this case, compute all the betti numbers separately for each colored subgraph.
-        # for this one, we may want to rework it so that it simply considers colors to partition into components instead
+        # in this case, compute all the betti numbers separately
+        #   for each colored subgraph. for this one, we may want
+        #   to rework it so that it simply considers colors to 
+        #   partition into components instead
         betti_lists = []
         for subgraph in get_colored_subgraphs(G, colors):
 
@@ -288,11 +293,13 @@ def betti_numbers(
                 nullities.append(nullity)
 
             if maps:
-                # prepend the number of nodes to nullities, append zero to ranks
+                # prepend the number of nodes to nullities, append 
+                #   zero to ranks
                 nullities = [maps[0].shape[0]] + nullities
                 ranks.append(0)
                 # compute the betti numbers    
-                betti = [nullities[k] - ranks[k] for k in range(len(ranks))]
+                betti = [nullities[k] - ranks[k] for k in range(
+                                                       len(ranks))]
             else:
                 # handle the edge cases
                 if not cliques:
@@ -303,7 +310,8 @@ def betti_numbers(
         
         # pad with zeros
         # a matrix of betti numbers
-        padded_betti = [b + [0] * (max_len - len(b)) for b in betti_lists]
+        padded_betti = [b + [0] * (max_len - len(b)) for b in
+                                                       betti_lists]
         B = np.array(padded_betti)
 
         return B

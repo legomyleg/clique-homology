@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.linalg import cho_factor, cho_solve, pinvh
 
 
 def make_random_null_dist(n, m):
@@ -50,41 +51,52 @@ def calculate_p_vector(obs_betti, null_betti_matrix):
     obs_betti: 1D array (The C. elegans vector)
     null_betti_matrix: 2D array (n permutations x m dimensions)
     """
-    # 1. Clean Zero-Variance Dimensions
-    # We only keep columns where the variance is non-zero
-    # keep_idx = np.var(null_betti_matrix, axis=0) > 1e-9
-    
-    # Filter both observation and null
-    # clean_obs = obs_betti[keep_idx]
-    # clean_null = null_betti_matrix[:, keep_idx]
     
     clean_obs, clean_null = _validate_p_vector_inputs(obs_betti, null_betti_matrix)
     
-    # 2. Calculate Null Statistics
+    # Calculate null statistics
     mu_null = np.mean(clean_null, axis=0)
     cov_null = np.atleast_2d(np.cov(clean_null, rowvar=False))
-    
-    # Inverse Covariance (Precision Matrix)
-    # Use pseudo-inverse if n < m, otherwise standard inv
-    try:
-        inv_cov = np.linalg.inv(cov_null)
-    except np.linalg.LinAlgError:
-        inv_cov = np.linalg.pinv(cov_null)
 
-    # 4. Calculate Distance for Observation (C. elegans)
-    d2_obs = get_mahalanobis(clean_obs, mu_null, inv_cov)
-    
-    # 5. Calculate Distances for Null Distribution (The Background)
-    # (Vectorized implementation for speed)
+    # --- REGULARIZATION STEP ---
+    # Add a small value to the diagonal of the covariance matrix
+    # This prevents numerical instability and singular matrices (0-values)
+    epsilon = 1e-1
+    # epsilon = 1e-6 * max(np.max(np.diag(cov_null)), 1e-9)
+    cov_null_reg = cov_null + np.eye(cov_null.shape[0]) * epsilon
+
+    diff_obs = clean_obs - mu_null
     diff_null = clean_null - mu_null
     
-    # Einsum is a fast way to do row-wise Mahalanobis
-    d2_null = np.einsum('ij,jk,ik->i', diff_null, inv_cov, diff_null)
+    # Inverse Covariance: Use pseudo-inverse if n < m, 
+    #   otherwise standard inv
+    try:
+        # Attempt Cholesky decomposition
+        c, lower = cho_factor(cov_null_reg)
+
+        # Solve for the observation
+        y_obs = cho_solve((c, lower), diff_obs)
+        d2_obs = np.dot(diff_obs, y_obs)
+
+        # solve for all null vectors simultaneously
+        # diff_null.T is (m x n), cho_solve returns (m x n), so we transpose back to (n x m)
+        Y_null = cho_solve((c, lower), diff_null.T).T
+
+        # Use einsum for optimized speed
+        d2_null = np.einsum('ij,ij->i', diff_null, Y_null)
+
+    except np.linalg.LinAlgError:
+        # Fallback for highlyt singular/sparse matricies: Symmetric Psoudo-Inverse
+        inv_cov = pinvh(cov_null_reg)
+
+        # Calculate distances using the pseudo-inverse
+        d2_obs = np.dot(diff_obs, inv_cov @ diff_obs)
+        d2_null = np.einsum('ij,jk,ik->i', diff_null, inv_cov, diff_null)
     
-    # 6. P-Value
+    # P-Value
     p_val = float(np.mean(d2_null >= d2_obs))
     
-    return p_val, d2_obs, d2_null
+    return p_val, float(d2_obs), d2_null
 
 
 if __name__ == "__main__":

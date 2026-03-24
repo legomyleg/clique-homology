@@ -1,10 +1,10 @@
 import networkx as nx
 import networkit as nk
 import matplotlib.pyplot as plt
-import generate_test_data 
-import stats_engine.betti_numbers as betti_numbers
+from . import generate_test_data
+from clique_homology.stats_engine import betti_numbers
 import math
-
+import random
 
 
 def get_packed_layout(G):
@@ -71,15 +71,15 @@ def visualize_colored_graph(G: nk.Graph, node_colors: list):
     pos = get_packed_layout(nx_graph)
     
     nx.draw(nx_graph, pos=pos, node_color=visual_colors, 
-            with_labels=True, node_size=500, edge_color="gray")
+            with_labels=True, node_size=500, edge_color="gray", font_color="white")
     
     plt.title("Full Colored Graph")
-    plt.savefig('visualization/plots/full_graph.png')
+    plt.savefig('clique_homology/visualization/plots/full_graph.png')
     
     
-    # ==========================================
-    # PLOT 2: The Subgraphs Grid
-    # ==========================================
+# ==========================================
+# PLOT 2: The Subgraphs Grid
+# ==========================================
     fig, axes = plt.subplots(2, 2, figsize=(8, 8))
 
     subgraphs = betti_numbers.get_colored_subgraphs(G, node_colors)
@@ -97,13 +97,14 @@ def visualize_colored_graph(G: nk.Graph, node_colors: list):
         col = index % 2
         sub_pos = nx.spring_layout(nx_subgraph, seed=42)
         color = palette[index % len(palette)]
-        nx.draw(nx_subgraph, ax=axes[row, col], node_color=color)
-        axes[row, col].set_title(f"Subgraph {index}")
+        
+        # Added with_labels=True to the line below
+        nx.draw(nx_subgraph, ax=axes[row, col], node_color=color, with_labels=True, edge_color="gray", font_color="white")
 
         index += 1
 
     plt.tight_layout() # Prevents overlap
-    plt.savefig('visualization/plots/colored_graph.png')
+    plt.savefig('clique_homology/visualization/plots/colored_graph.png')
 
 
 
@@ -129,7 +130,52 @@ def visualize_random_connected_colored_graph():
     # Pass BOTH to the visualizer
     visualize_colored_graph(G, node_colors)    
 
+
+def visualize_four_random_colorings(n_nodes: int):
+    """
+    Generates a random graph of n nodes, applies 4 random colorings 
+    (using 3 colors), and plots them as subplots on a 2x2 grid.
+    """
+    # 1. Generate the base graph using your existing generator (we ignore the default colors)
+    G, _ = generate_test_data.generate_connected_colored_graph(n_nodes)
+    
+    # 2. Convert NetworKit -> NetworkX
+    nx_graph = nk.nxadapter.nk2nx(G)
+    
+    # 3. Calculate layout ONCE so the graph structure is identical across all 4 subplots
+    pos = get_packed_layout(nx_graph)
+    
+    # 4. Define our 3-color palette
+    palette = ['red', 'blue', 'green']
+    
+    # 5. Set up the 2x2 grid
+    fig, axes = plt.subplots(2, 2, figsize=(8, 8))
+    
+    for index in range(4):
+        # Generate random colors (0, 1, or 2) for each node
+        node_colors = [random.randint(0, 2) for _ in range(n_nodes)]
+        
+        # Map integer IDs to actual color strings
+        visual_colors = [palette[c % len(palette)] for c in node_colors]
+        
+        row = index // 2
+        col = index % 2
+        
+        # Draw using the consistent settings from your other plots
+        nx.draw(nx_graph, pos=pos, ax=axes[row, col], node_color=visual_colors, 
+                with_labels=True, node_size=500, edge_color="gray", font_color="white")
+
+    plt.tight_layout() # Prevents overlap
+    plt.savefig('clique_homology/visualization/plots/four_random_colorings.png')
+
+
+
+
+
+
+
+
 # Run it
 if __name__ == "__main__":
     # visualize_random_colored_graph()
-    visualize_random_connected_colored_graph()
+    visualize_four_random_colorings(12)

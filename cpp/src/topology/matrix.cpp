@@ -72,6 +72,8 @@ class BinaryMatrix {
 // ---------------------------------------------------------------------------------------------------------
 
     public:
+        // empty constructor
+        BinaryMatrix() : rows(0), cols(0), col_ints(0), data() {}
         // constructor initializes to zero matrix of given dimensions
         BinaryMatrix(unsigned int r, unsigned int c) 
         : rows(r), 

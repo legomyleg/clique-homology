@@ -1,5 +1,5 @@
 #include <vector>
-#include "matrix.hpp"
+#include "sparse_matrix.hpp"
 #include <map>
 #include <algorithm>
 
@@ -9,8 +9,8 @@ using std::vector, std::map, std::pair;
 //  vector of same size cliques
 //      a clique is a vector of integers
 // assume that it is all sorted in ascending order for binary search
-vector<BinaryMatrix> construct_boundary_maps(const vector<vector<vector<unsigned int>>>& size_map) {
-    vector<BinaryMatrix> boundary_maps(size_map.size()-1);
+vector<SparseBinaryMatrix> construct_boundary_maps(const vector<vector<vector<unsigned int>>>& size_map) {
+    vector<SparseBinaryMatrix> boundary_maps(size_map.size()-1);
     // for each clique size k
     for (int k = 0; k < size_map.size()-1; k++) {
 
@@ -19,7 +19,7 @@ vector<BinaryMatrix> construct_boundary_maps(const vector<vector<vector<unsigned
         const auto& kplus1_cliques = size_map[k+1];
 
         // initalize boundary matrix to zeros of appropriate size
-        boundary_maps[k] = BinaryMatrix(k_cliques.size(), kplus1_cliques.size());
+        boundary_maps[k] = SparseBinaryMatrix(k_cliques.size(), kplus1_cliques.size());
 
         // loop through the k+1 cliques and get the faces
         // keep track of which position we assign it to in the binary matrix

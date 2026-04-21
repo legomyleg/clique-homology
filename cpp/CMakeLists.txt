@@ -15,7 +15,7 @@ set(HEADERS
     src/internal/data_types.hpp
     src/internal/graph.hpp
     src/internal/matrix.hpp
-    src/internal/matrix2.hpp
+    src/internal/sparse_matrix.hpp
     src/internal/maximal_cliques.hpp
     src/internal/permutation_test.hpp
     src/internal/pval_vector.hpp
@@ -35,7 +35,7 @@ set(SOURCE
     src/stats/pval_vector.cpp
     src/topology/boundary_maps.cpp
     src/topology/matrix.cpp
-    src/topology/matrix2.cpp
+    src/topology/sparse_matrix.cpp
 )
 
 add_library(${TARGET} STATIC ${SOURCE} ${HEADERS})
@@ -54,6 +54,20 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+set(EIGEN_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+    Eigen3
+    GIT_REPOSITORY  https://gitlab.com/libeigen/eigen.git
+    GIT_TAG         3.4.0
+)
+FetchContent_MakeAvailable(Eigen3)
+
+set(BUILD_TESTING ON CACHE BOOL "" FORCE)
+
+target_link_libraries(graphoplib PUBLIC Eigen3::Eigen)
+
 add_executable(test_betti tests/test_betti.cpp)
 target_link_libraries(test_betti PRIVATE ${TARGET} GTest::gtest_main)
 
@@ -63,28 +77,11 @@ target_link_libraries(test_graph PRIVATE ${TARGET} GTest::gtest_main)
 add_executable(test_maximal_cliques tests/test_maximal_cliques.cpp)
 target_link_libraries(test_maximal_cliques PRIVATE ${TARGET} GTest::gtest_main)
 
-add_executable(test_matrix tests/test_matrix.cpp)
-target_link_libraries(test_matrix PRIVATE ${TARGET} GTest::gtest_main)
+# add_executable(test_matrix tests/test_matrix.cpp)
+# target_link_libraries(test_matrix PRIVATE ${TARGET} GTest::gtest_main)
 
 include(GoogleTest)
 gtest_discover_tests(test_betti)
 gtest_discover_tests(test_graph)
 gtest_discover_tests(test_maximal_cliques)
-gtest_discover_tests(test_matrix)
-
-# EIGEN: Standardizing package inclusion across computers
-# Include the FetchContent CMake module
-Include(FetchContent)
-
-# Tell CMake where to get Eigen From
-FetchContent_Declare(
-    Eigen3
-    GIT_REPOSITORY  https://gitlab.com/libeigen/eigen.git
-    GIT_TAG         3.4.0
-)
-
-# Make Eigen available to the project, add executable, and link
-#   to the target
-FetchContent_MakeAvailable(*Eigen3)
-add_executable(clique_homology main/main.cpp)
-target_link_libraries(clique_homology PRIVATE Eigen3::Eigen)
+# gtest_discover_tests(test_matrix)

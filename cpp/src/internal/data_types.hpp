@@ -2,7 +2,7 @@
 #include <vector>
 using std::vector;
 
-int WORD_SIZE = 64;
+inline constexpr int WORD_SIZE = 64;
 
 using VertexId = int;
 using AdjList = vector<vector<VertexId>>;
